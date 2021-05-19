@@ -1,0 +1,23 @@
+module TestApp
+{
+	struct AddReq {
+		0 optional int a;
+		1 optional int b;
+	};
+	struct AddRsp {
+		0 optional int c;
+	};
+	struct SubReq {
+		0 optional int a;
+		1 optional int b;
+	};
+	struct SubRsp {
+		0 optional int c;
+	};
+
+	interface Main
+	{
+		void Add(AddReq req, out AddRsp rsp);
+		void Sub(SubReq req, out SubRsp rsp);
+	};
+};

@@ -1,0 +1,10 @@
+- app_name: Demo
+  svc_name: HelloServer
+  adapters:
+    - object: HelloObj
+
+- app_name: Demo
+    svc_name: JsonTarsProxy
+    adapters:
+      - object: HelloObj
+        port: 80

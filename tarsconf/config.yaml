@@ -1,0 +1,8 @@
+deploy:
+  tars:
+    web: http://localhost:30000
+    token: get_from_tars_web
+  k8s:
+    img_prefix: ''
+    cmd: kubectl
+    namespace: default

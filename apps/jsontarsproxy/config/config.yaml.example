@@ -1,0 +1,3 @@
+actionlist:
+  - name: SayHello
+    addr: abc.ad.MainObj@tcp -h 127.0.0.1 -p 10016
