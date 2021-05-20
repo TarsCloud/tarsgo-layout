@@ -88,7 +88,7 @@ func NewOption() *initOption {
 		},
 
 		// 服务filter: 日志、调用链
-		serverFilter: func(ctx context.Context, d tars.Dispatch, f interface{}, req *requestf.RequestPacket, resp *requestf.ResponsePacket, withContext bool) error {
+		serverFilter: func(ctx context.Context, d tars.Dispatch, f interface{}, req *requestf.RequestPacket, resp *requestf.ResponsePacket, withContext bool) (invokeErr error) {
 			// 日志
 			logObj := make(map[string]interface{})
 			now := time.Now()
@@ -102,13 +102,13 @@ func NewOption() *initOption {
 			span := opentracing.StartSpan(req.SFuncName, ext.SpanKindRPCServer, ext.RPCServerOption(spanCtx))
 			ctx = opentracing.ContextWithSpan(ctx, span)
 
-			log.Debug("status is", req.Status)
-			var invokeErr error
 			defer func() {
 				// recover处理
 				if rr := recover(); rr != nil {
 					resp.IRequestId = req.IRequestId
 					invokeErr = ecode.Server("panic: %v", rr)
+					resp.IRet = ecode.ServerError
+					resp.SResultDesc = invokeErr.Error()
 
 					buf := make([]byte, 16*1014)
 					n := runtime.Stack(buf, false)
@@ -147,7 +147,6 @@ func (opt *initOption) DoInit() error {
 		metrics.SetPrometheusStat()
 	}
 	if opt.enableTracing {
-		fmt.Println("EnableJaeger")
 		tracing.EnableJaeger()
 	}
 	if opt.dispatch != nil {

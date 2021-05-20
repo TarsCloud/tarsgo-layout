@@ -15,7 +15,7 @@ var (
 
 // Server return the server side tars.Error
 func Server(format string, args ...interface{}) *tars.Error {
-	return &tars.Error{Code: ClientError, Message: fmt.Sprintf(format, args...)}
+	return &tars.Error{Code: ServerError, Message: fmt.Sprintf(format, args...)}
 }
 
 // Client return the client side tars.Error
