@@ -1,21 +1,19 @@
 package metrics
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
-
-	"github.com/tarscloud/gopractice/common/log"
-
-	"github.com/tarscloud/gopractice/common/ecode"
-
 	"github.com/TarsCloud/TarsGo/tars"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"github.com/tarscloud/gopractice/common/ecode"
+	"github.com/tarscloud/gopractice/common/log"
 )
 
 var (
@@ -43,11 +41,11 @@ var (
 func SetPrometheusStat() {
 	cfg := tars.GetServerConfig()
 	if cfg == nil {
-		log.Error("Only support in server")
+		log.Error(context.Background(), "Only support in server")
 		return
 	}
 	srcSvc := fmt.Sprintf("%s.%s", cfg.App, cfg.Server)
-	log.Debug("SetPrometheusStat start")
+	log.Debug(context.Background(), "SetPrometheusStat start")
 	tars.ReportStat = func(msg *tars.Message, succ int32, timeout int32, exec int32) {
 		code := "0"
 		if msg.Resp != nil {
@@ -83,7 +81,7 @@ func Listen() {
 	}
 	temps := strings.Split(addr, ":")
 	if len(temps) != 2 {
-		log.Error("bad format of addr %v", addr)
+		log.Error(context.Background(), "bad format of addr %v", addr)
 		return
 	}
 	sp := strings.Split(temps[1], "-")
@@ -92,14 +90,14 @@ func Listen() {
 		endPort, _ := strconv.Atoi(sp[1])
 		port, err := getRandomPort(temps[0], "tcp", startPort, endPort)
 		if err != nil {
-			log.Error("getRandomPort error %v", addr)
+			log.Error(context.Background(), "getRandomPort error %v", addr)
 			return
 		}
 		addr = fmt.Sprintf("%s:%d", temps[0], port)
 	}
-	log.Debug("prometheus listen on %s", addr)
+	log.Debug(context.Background(), "prometheus listen on %s", addr)
 	http.Handle("/metrics", promhttp.Handler())
 	if err := http.ListenAndServe(addr, nil); err != nil {
-		log.Error("prometheus listen error %v", err)
+		log.Error(context.Background(), "prometheus listen error %v", err)
 	}
 }

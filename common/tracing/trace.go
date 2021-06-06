@@ -1,6 +1,8 @@
 package tracing
 
 import (
+	"context"
+
 	"github.com/TarsCloud/TarsGo/tars"
 	"github.com/opentracing/opentracing-go"
 	"github.com/tarscloud/gopractice/common/log"
@@ -18,14 +20,14 @@ func EnableJaeger() {
 	}
 	cfg, err := cfg.FromEnv()
 	if err != nil {
-		log.Error("Could not parse jaeger env vars: %s", err.Error())
+		log.Error(context.Background(), "Could not parse jaeger env vars: %s", err.Error())
 		return
 	}
 	tracer, _, err := cfg.NewTracer()
 	if err != nil {
-		log.Error("Could not initialize jaeger tracer: %s", err.Error())
+		log.Error(context.Background(), "Could not initialize jaeger tracer: %s", err.Error())
 		return
 	}
-	log.Debug("Enable jaeger")
+	log.Debug(context.Background(), "Enable jaeger")
 	opentracing.SetGlobalTracer(tracer)
 }

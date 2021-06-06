@@ -45,11 +45,6 @@ func NewOption() *initOption {
 		enableTracing: true,
 		// 日志: 增加req/rsp
 		dispatch: func(ctx context.Context, req []interface{}, rsp []interface{}, returns []interface{}) {
-			logObj, ok := ctx.Value(logKey).(map[string]interface{})
-			if !ok {
-				log.Debug("log key not found in ctx")
-				return
-			}
 			var iReq, iRsp interface{} = req, rsp
 			if len(req) == 1 {
 				iReq = req[0]
@@ -57,10 +52,9 @@ func NewOption() *initOption {
 			if len(rsp) == 1 {
 				iRsp = rsp[0]
 			}
-			bs, _ := json.Marshal(iReq)
-			logObj["Req"] = string(bs)
-			bs, _ = json.Marshal(iRsp)
-			logObj["Rsp"] = string(bs)
+			rbs, _ := json.Marshal(iReq)
+			sbs, _ := json.Marshal(iRsp)
+			log.Debug(ctx, "req is %s, rsp is %s", string(rbs), string(sbs))
 		},
 
 		// 客户端filter: 调用链
@@ -90,16 +84,20 @@ func NewOption() *initOption {
 		// 服务filter: 日志、调用链
 		serverFilter: func(ctx context.Context, d tars.Dispatch, f interface{}, req *requestf.RequestPacket, resp *requestf.ResponsePacket, withContext bool) (invokeErr error) {
 			// 日志
-			logObj := make(map[string]interface{})
-			now := time.Now()
-			logObj["StartMS"] = now.Format("2006-01-02 15:04:05")
-			ctx = context.WithValue(ctx, logKey, logObj)
-			startTime := now.UnixNano() / 1e6
+			startTime := time.Now()
+			logKv := make([]interface{}, 0)
+			for k, v := range req.Status {
+				if strings.HasPrefix(k, statusLogPrefix) {
+					kk := k[len(statusLogPrefix):]
+					logKv = append(logKv, kk)
+					logKv = append(logKv, v)
+				}
+			}
+			ctx = log.WithFields(ctx, logKv...)
 
 			// 调用链
-			spanCtx, _ := opentracing.GlobalTracer().Extract(opentracing.TextMap,
-				opentracing.TextMapCarrier(req.Status))
-			span := opentracing.StartSpan(req.SFuncName, ext.SpanKindRPCServer, ext.RPCServerOption(spanCtx))
+			span := tracing.SpanFromMap(req.SFuncName, req.Status)
+			defer span.Finish()
 			ctx = opentracing.ContextWithSpan(ctx, span)
 
 			defer func() {
@@ -112,26 +110,20 @@ func NewOption() *initOption {
 
 					buf := make([]byte, 16*1014)
 					n := runtime.Stack(buf, false)
-					log.Error("%v\n%s", rr, string(buf[:n]))
-				}
-				// 调用链
-				if span != nil {
-					span.Finish()
+					log.Error(ctx, "%v\n%s", rr, string(buf[:n]))
 				}
 
 				// 日志
+				logKv := []interface{}{
+					"CostMS", (time.Now().UnixNano() - startTime.UnixNano()) / 1e6,
+					"StartTime", startTime.Format("2006-01-02 15:04:05"),
+					"Code", tars.GetErrorCode(invokeErr),
+				}
 				if invokeErr != nil {
-					logObj["Code"] = tars.GetErrorCode(invokeErr)
-					logObj["Error"] = invokeErr.Error()
+					logKv = append(logKv, "Error", invokeErr.Error())
 				}
-				logObj["CostMS"] = time.Now().UnixNano()/1e6 - startTime
-				for k, v := range req.Status {
-					if strings.HasPrefix(k, statusLogPrefix) {
-						kk := k[len(statusLogPrefix):]
-						logObj[kk] = v
-					}
-				}
-				log.Write(logObj)
+				ctx = log.WithFields(ctx, logKv...)
+				log.Info(ctx, "done")
 			}()
 
 			// 业务逻辑

@@ -11,8 +11,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/tarscloud/gopractice/common/tracing"
+
 	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
 
 	"github.com/tarscloud/gopractice/common/log"
 
@@ -51,54 +52,51 @@ func HandlerFunc(w http.ResponseWriter, r *http.Request) {
 	}
 	var tarsStatus = make(map[string]string)
 	var actionName string
-	var reqBody, rspByte []byte
 	var startTime = time.Now().UnixNano() / 1e6
 
+	span, traceID := tracing.SpanFromRequest(r)
 	cfg := tars.GetServerConfig()
-	logObj := map[string]interface{}{
-		"Server":    cfg.Server,
-		"IP":        cfg.LocalIP,
-		"ReqId":     rsp.RequestId,
-		"StartTime": time.Now().Format("2006-01-02 15:04:05"),
-	}
+	ctx := log.WithFields(context.Background(),
+		"ServerName", cfg.Server,
+		"ServerIp", cfg.LocalIP,
+		"RequestId", traceID,
+		"ClientIp", strings.Split(r.RemoteAddr, ":")[0],
+		"StartTime", time.Now().Format("2006-01-02 15:04:05"),
+	)
 
 	// 调用链
-	span := opentracing.StartSpan("unknown", ext.SpanKindRPCServer)
-	ctx := opentracing.ContextWithSpan(context.Background(), span)
-
+	ctx = opentracing.ContextWithSpan(ctx, span)
 	defer func() {
 		if err := recover(); err != nil {
 			rsp.Code = ecode.ServerError
 			rsp.Error = "panic: " + fmt.Sprint(err)
 		}
-		rsp.write(w)
+		rsp.write(ctx, w)
 
-		logObj["Action"] = actionName
-		logObj["CostMS"] = time.Now().UnixNano()/1e6 - startTime
-		logObj["Req"] = string(reqBody)
-		logObj["Rsp"] = string(rspByte)
-
-		if rsp.Code != 0 {
-			logObj["Code"] = rsp.Code
-			logObj["Error"] = rsp.Error
+		// 日志
+		logKv := []interface{}{
+			"Action", actionName,
+			"Code", rsp.Code,
+			"Error", rsp.Error,
+			"CostMS", time.Now().UnixNano()/1e6 - startTime,
 		}
-
 		for k, v := range tarsStatus {
 			if strings.HasPrefix(k, logKeyPrefix) {
-				logObj[k[len(logKeyPrefix):]] = v
+				logKv = append(logKv, k[len(logKeyPrefix):])
+				logKv = append(logKv, v)
 			}
 		}
-		log.Write(logObj)
+		ctx = log.WithFields(ctx, logKv...)
+		log.Info(ctx, "done")
 
 		// 调用链
-		if span != nil {
-			span.SetOperationName(actionName)
-			span.SetTag("reqId", rsp.RequestId)
-			span.Finish()
-		}
+		span.SetOperationName(actionName)
+		span.Finish()
 	}()
 
+	var err error
 	reqBody, err := ioutil.ReadAll(r.Body)
+	log.Debug(ctx, "req is %s", string(reqBody))
 	if err != nil {
 		rsp.Code, rsp.Error = ecode.ClientError, "Read request error "+err.Error()
 		return
@@ -154,7 +152,7 @@ func HandlerFunc(w http.ResponseWriter, r *http.Request) {
 		rsp.Code, rsp.Error = code, "Tars invoke error "+err.Error()
 		return
 	}
-	rspByte = codec.FromInt8(resp.SBuffer)
+	rspByte := codec.FromInt8(resp.SBuffer)
 	jsonRsp := make(map[string]interface{})
 	if err := json.Unmarshal(rspByte, &jsonRsp); err != nil {
 		rsp.Code, rsp.Error = ecode.ServerError, fmt.Sprintf("Unmarshal rspByte error %v", err)
@@ -174,11 +172,12 @@ func hashCode(s interface{}) uint32 {
 	return h.Sum32()
 }
 
-func (r *response) write(w http.ResponseWriter) {
+func (r *response) write(ctx context.Context, w http.ResponseWriter) {
 	bs, _ := json.Marshal(r)
 	_, err := w.Write(bs)
+	log.Debug(ctx, "rsp is %s", string(bs))
 	if err != nil {
-		log.Error("Write error %v", err)
+		log.Error(ctx, "Write error %v", err)
 	}
 }
 
