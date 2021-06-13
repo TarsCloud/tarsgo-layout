@@ -1,4 +1,4 @@
-APP       := TestApp
+APP       := Base
 TARGET    := HelloServer
 
 -include ../../deploy/makefile

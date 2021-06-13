@@ -2,68 +2,95 @@ package tracing
 
 import (
 	"context"
+	"net/http"
+
+	"github.com/opentracing/opentracing-go/ext"
 
 	"github.com/opentracing/opentracing-go"
+	olog "github.com/opentracing/opentracing-go/log"
 )
 
 const maxSpanLength = 64
 
 type spanOpt struct {
 	isPreExec bool
-	eFunc     func(span opentracing.Span)
+	eFunc     spanOptFunc
 }
 
-// Factory is the tracing factory
-type Factory struct {
-	ctx context.Context
+type spanOptFunc func(span opentracing.Span)
+
+// NewServerSpanFromMap must return an finish function
+func NewServerSpanFromHTTP(r *http.Request, opts ...*spanOpt) func() {
+	carrier := opentracing.HTTPHeadersCarrier(r.Header)
+	spanCtx, _ := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, carrier)
+	return newSpan(spanCtx, false, r.URL.Path, opts...)
 }
 
-// NewFactory return the tracing factory
-func NewFactory(ctx context.Context) *Factory {
-	return &Factory{
-		ctx: ctx,
+// NewServerSpanFromMap must return an finish function
+func NewServerSpanFromMap(name string, m map[string]string, opts ...*spanOpt) func() {
+	spanCtx, _ := opentracing.GlobalTracer().Extract(opentracing.TextMap,
+		opentracing.TextMapCarrier(m))
+	return newSpan(spanCtx, false, name, opts...)
+}
+
+// NewClientSpan must return an finish function
+func NewClientSpan(ctx context.Context, name string, opts ...*spanOpt) func() {
+	span := opentracing.SpanFromContext(ctx)
+	if span == nil {
+		return func() {}
+	}
+	return newSpan(span.Context(), true, name, opts...)
+}
+
+// WithPre returns option for pre exec func
+func WithPre(optFunc spanOptFunc) *spanOpt {
+	return &spanOpt{
+		isPreExec: true,
+		eFunc:     optFunc,
 	}
 }
 
-// NewSpan must return an finish function
-func (t *Factory) NewSpan(name string, opts ...*spanOpt) func() {
+// WithPost returns option for post exec func
+func WithPost(optFunc spanOptFunc) *spanOpt {
+	return &spanOpt{
+		isPreExec: false,
+		eFunc:     optFunc,
+	}
+}
+
+// WithPostCheck set span tag/logs if cFunc returns error
+func WithPostCheck(cFunc func(span opentracing.Span) error) *spanOpt {
+	return WithPost(func(span opentracing.Span) {
+		if err := cFunc(span); err != nil {
+			span.SetTag("error", true)
+			span.LogFields(
+				olog.String("message", err.Error()),
+			)
+		}
+	})
+}
+
+func newSpan(spanCtx opentracing.SpanContext, isClient bool, name string, opts ...*spanOpt) func() {
 	if len(name) > maxSpanLength {
 		name = name[:maxSpanLength] + "..."
 	}
-	if opentracing.SpanFromContext(t.ctx) != nil {
-		span, _ := opentracing.StartSpanFromContext(t.ctx, name)
-		if span == nil {
-			return func() {}
+	var span opentracing.Span
+	if isClient {
+		span = opentracing.StartSpan(name, ext.SpanKindRPCClient, opentracing.ChildOf(spanCtx))
+	} else {
+		span = opentracing.StartSpan(name, ext.SpanKindRPCServer, ext.RPCServerOption(spanCtx))
+	}
+	for _, f := range opts {
+		if f.isPreExec {
+			f.eFunc(span)
 		}
+	}
+	return func() {
 		for _, f := range opts {
-			if f.isPreExec {
+			if !f.isPreExec {
 				f.eFunc(span)
 			}
 		}
-		return func() {
-			for _, f := range opts {
-				if !f.isPreExec {
-					f.eFunc(span)
-				}
-			}
-			span.Finish()
-		}
-	}
-	return func() {}
-}
-
-// PreExec execute the func after span start
-func PreExec(f func(span opentracing.Span)) *spanOpt {
-	return &spanOpt{
-		isPreExec: true,
-		eFunc:     f,
-	}
-}
-
-// PostExec execute the func before span finish
-func PostExec(f func(span opentracing.Span)) *spanOpt {
-	return &spanOpt{
-		isPreExec: false,
-		eFunc:     f,
+		span.Finish()
 	}
 }

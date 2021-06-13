@@ -1,4 +1,4 @@
-module TestApp
+module Base
 {
 	struct AddReq {
 		0 optional int a;

@@ -27,3 +27,12 @@ func Client(format string, args ...interface{}) *tars.Error {
 func IsClientErrorCode(eCode int32) bool {
 	return ClientError <= eCode && eCode < ServerError
 }
+
+// IsClientError returns true if the eCode represents the client error
+func IsClientError(err error) bool {
+	if err == nil {
+		return false
+	}
+	eCode := tars.GetErrorCode(err)
+	return IsClientErrorCode(eCode)
+}

@@ -1,3 +1,4 @@
 apps/jsontarsproxy/JsonTarsProxy
 apps/helloserver/HelloServer
+apps/**/*.tgz
 

@@ -11,8 +11,9 @@ import (
 
 	"github.com/TarsCloud/TarsGo/tars"
 	"github.com/TarsCloud/TarsGo/tars/protocol/res/requestf"
+	"github.com/TarsCloud/TarsGo/tars/util/current"
 	"github.com/opentracing/opentracing-go"
-	"github.com/opentracing/opentracing-go/ext"
+
 	"github.com/tarscloud/gopractice/common/ecode"
 	"github.com/tarscloud/gopractice/common/log"
 	"github.com/tarscloud/gopractice/common/metrics"
@@ -54,38 +55,58 @@ func NewOption() *initOption {
 			}
 			rbs, _ := json.Marshal(iReq)
 			sbs, _ := json.Marshal(iRsp)
-			log.Debug(ctx, "req is %s, rsp is %s", string(rbs), string(sbs))
+			log.Info(ctx, "req is %s, rsp is %s", string(rbs), string(sbs))
 		},
 
 		// 客户端filter: 调用链
 		clientFilter: func(ctx context.Context, msg *tars.Message, invoke tars.Invoke, timeout time.Duration) error {
-			var span opentracing.Span
-			// 只有ctx有调用链才会注入
-			if opentracing.SpanFromContext(ctx) != nil {
-				span = opentracing.StartSpan(msg.Req.SFuncName,
-					ext.SpanKindRPCClient,
-				)
-				// inject to context
+			var invokeErr error
+
+			// 传递status
+			st, _ := current.GetRequestStatus(ctx)
+			if msg.Req.Status == nil {
+				msg.Req.Status = make(map[string]string)
+			}
+			for k, v := range st {
+				msg.Req.Status[k] = v
+			}
+
+			// 调用链
+			injectOpt := func(span opentracing.Span) {
 				if msg.Req.Status == nil {
 					msg.Req.Status = make(map[string]string)
 				}
-				_ = opentracing.GlobalTracer().Inject(span.Context(),
+				opentracing.GlobalTracer().Inject(span.Context(),
 					opentracing.TextMap, opentracing.TextMapCarrier(msg.Req.Status))
 			}
-			defer func() {
-				if span != nil {
-					span.Finish()
+			checkOpt := tracing.WithPostCheck(func(span opentracing.Span) error {
+				if ip, ok := current.GetServerIPFromContext(ctx); ok {
+					span.SetTag("peer.ipv4", ip)
 				}
-			}()
-			err := invoke(ctx, msg, timeout)
-			return err
+				if invokeErr != nil && !ecode.IsClientError(invokeErr) {
+					return invokeErr
+				}
+				return nil
+			})
+			defer tracing.NewClientSpan(ctx, msg.Req.SFuncName, tracing.WithPre(injectOpt), checkOpt)()
+
+			invokeErr = invoke(ctx, msg, timeout)
+			return invokeErr
 		},
 
 		// 服务filter: 日志、调用链
 		serverFilter: func(ctx context.Context, d tars.Dispatch, f interface{}, req *requestf.RequestPacket, resp *requestf.ResponsePacket, withContext bool) (invokeErr error) {
 			// 日志
+			cfg := tars.GetServerConfig()
+			cIp, _ := current.GetClientIPFromContext(ctx)
 			startTime := time.Now()
-			logKv := make([]interface{}, 0)
+			logKv := []interface{}{
+				"ServerName", cfg.Server,
+				"SetName", cfg.Setdivision,
+				"ServerIp", cfg.LocalIP,
+				"ClientIp", cIp,
+				"Action", req.SFuncName,
+			}
 			for k, v := range req.Status {
 				if strings.HasPrefix(k, statusLogPrefix) {
 					kk := k[len(statusLogPrefix):]
@@ -93,12 +114,20 @@ func NewOption() *initOption {
 					logKv = append(logKv, v)
 				}
 			}
+			current.SetRequestStatus(ctx, req.Status)
 			ctx = log.WithFields(ctx, logKv...)
 
 			// 调用链
-			span := tracing.SpanFromMap(req.SFuncName, req.Status)
-			defer span.Finish()
-			ctx = opentracing.ContextWithSpan(ctx, span)
+			preFunc := func(span opentracing.Span) {
+				ctx = opentracing.ContextWithSpan(ctx, span)
+			}
+			checkFunc := func(span opentracing.Span) error {
+				if invokeErr != nil && !ecode.IsClientError(invokeErr) {
+					return invokeErr
+				}
+				return nil
+			}
+			defer tracing.NewServerSpanFromMap(req.SFuncName, req.Status, tracing.WithPre(preFunc), tracing.WithPostCheck(checkFunc))()
 
 			defer func() {
 				// recover处理
@@ -116,7 +145,6 @@ func NewOption() *initOption {
 				// 日志
 				logKv := []interface{}{
 					"CostMS", (time.Now().UnixNano() - startTime.UnixNano()) / 1e6,
-					"StartTime", startTime.Format("2006-01-02 15:04:05"),
 					"Code", tars.GetErrorCode(invokeErr),
 				}
 				if invokeErr != nil {
@@ -133,6 +161,7 @@ func NewOption() *initOption {
 	}
 }
 
+// DoInit start the initialization of server
 func (opt *initOption) DoInit() error {
 	if opt.enableMetrics {
 		go metrics.Listen()

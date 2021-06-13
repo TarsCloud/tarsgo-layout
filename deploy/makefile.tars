@@ -20,7 +20,7 @@ PB2GO     	:= $(firstword $(subst :, , $(GOPATH)))/bin/protoc
 
 #-------------------------------------------------------------------------------
 
-TARS_SRC     := $(wildcard *.tars)
+TARS_SRC    ?= $(wildcard *.tars)
 PRO_SRC     += $(wildcard *.proto)
 GO_SRC      := $(wildcard *.go)
 

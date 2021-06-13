@@ -2,29 +2,27 @@ package log
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"runtime"
 	"strings"
 	"time"
 
-	"github.com/TarsCloud/TarsGo/tars/util/rogger"
-
 	"github.com/TarsCloud/TarsGo/tars"
+	"github.com/TarsCloud/TarsGo/tars/util/rogger"
 )
 
 var (
-	jsonLog  = tars.GetHourLogger("json", 24*2)
-	debugLog = tars.GetLogger("debug")
-	errorLog = tars.GetLogger("error")
+	jsonLog = tars.GetDayLogger("json", 3)
 
 	logKey   = "M"
-	levelKey = "L"
+	levelKey = "C"
 	timeKey  = "T"
 	lineKey  = "L"
-	kvKey    interface{}
 
-	enableDebug = true
+	kvKey       interface{} = struct{}{}
+	enableDebug             = true
 )
 
 // Debug 写文件debug日志
@@ -49,27 +47,31 @@ func Error(ctx context.Context, format string, args ...interface{}) {
 func WithFields(ctx context.Context, kv ...interface{}) context.Context {
 	vv := getKvFromContext(ctx)
 	if vv == nil {
-		vv = make(map[interface{}]interface{})
+		vv = make(map[string]interface{})
 	}
 	for i := 1; i < len(kv); i += 2 {
-		vv[kv[i-1]] = kv[i]
+		vv[fmt.Sprint(kv[i-1])] = kv[i]
 	}
 	return context.WithValue(ctx, kvKey, vv)
 }
 
-func getKvFromContext(ctx context.Context) map[interface{}]interface{} {
+func getKvFromContext(ctx context.Context) map[string]interface{} {
 	if val := ctx.Value(kvKey); val != nil {
-		return val.(map[interface{}]interface{})
+		return val.(map[string]interface{})
 	}
 	return nil
 }
 
 func writef(ctx context.Context, level rogger.LogLevel, format string, args []interface{}) {
+	logKv := map[string]interface{}{
+		timeKey:  time.Now().Format("2006-01-02 15:04:05.000"),
+		logKey:   fmt.Sprintf(format, args...),
+		levelKey: level.String(),
+	}
 	kv := getKvFromContext(ctx)
-	newKV := make(map[interface{}]interface{})
 	if kv != nil {
 		for k, v := range kv {
-			newKV[k] = v
+			logKv[k] = v
 		}
 	}
 	if level == rogger.DEBUG {
@@ -80,11 +82,12 @@ func writef(ctx context.Context, level rogger.LogLevel, format string, args []in
 		} else {
 			file = filepath.Base(file)
 		}
-		newKV[lineKey] = fmt.Sprintf("%s:%s:%d|", file, getFuncName(runtime.FuncForPC(pc).Name()), line)
+		logKv[lineKey] = fmt.Sprintf("%s:%s:%d", file, getFuncName(runtime.FuncForPC(pc).Name()), line)
 	}
-	newKV[timeKey] = time.Now().Format("2006-01-02 15:04:05.000")
-	newKV[logKey] = fmt.Sprintf(format, args...)
-	newKV[levelKey] = level.String()
+
+	bs, _ := json.Marshal(logKv)
+	bs = append(bs, '\n')
+	jsonLog.WriteLog(bs)
 }
 
 func getFuncName(name string) string {

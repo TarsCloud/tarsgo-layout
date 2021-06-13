@@ -1,9 +1,7 @@
-
-J2GO_FLAG := --outdir=../autogen --dispatch-reporter=true
-GOOS      := linux
-
 GO_MOD:=github.com/tarscloud/gopractice
-J2GO_FLAG += --module=${GO_MOD}/apps/autogen
+TARS_SRC  := $(wildcard proto/*.tars)
+J2GO_FLAG := --outdir=proto/stub --dispatch-reporter=true --module=${GO_MOD}/apps/autogen
+GOOS      := linux
 
 include ../../deploy/makefile.tars
 

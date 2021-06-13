@@ -11,20 +11,19 @@ import (
 	"sync"
 	"time"
 
-	"github.com/tarscloud/gopractice/common/tracing"
-
-	"github.com/opentracing/opentracing-go"
-
-	"github.com/tarscloud/gopractice/common/log"
-
 	"github.com/TarsCloud/TarsGo/tars"
 	"github.com/TarsCloud/TarsGo/tars/protocol/codec"
 	"github.com/TarsCloud/TarsGo/tars/protocol/res/basef"
 	"github.com/TarsCloud/TarsGo/tars/protocol/res/requestf"
 	"github.com/TarsCloud/TarsGo/tars/util/current"
 	"github.com/defool/uuid"
+	"github.com/opentracing/opentracing-go"
+	"github.com/uber/jaeger-client-go"
+
 	"github.com/tarscloud/gopractice/apps/jsontarsproxy/config"
 	"github.com/tarscloud/gopractice/common/ecode"
+	"github.com/tarscloud/gopractice/common/log"
+	"github.com/tarscloud/gopractice/common/tracing"
 )
 
 var (
@@ -47,31 +46,51 @@ type response struct {
 
 // HandlerFunc ...
 func HandlerFunc(w http.ResponseWriter, r *http.Request) {
-	rsp := response{
-		RequestId: uuid.UUID(),
-	}
+	// 初始化
 	var tarsStatus = make(map[string]string)
+	var reqBody []byte
 	var actionName string
 	var startTime = time.Now().UnixNano() / 1e6
-
-	span, traceID := tracing.SpanFromRequest(r)
-	cfg := tars.GetServerConfig()
-	ctx := log.WithFields(context.Background(),
-		"ServerName", cfg.Server,
-		"ServerIp", cfg.LocalIP,
-		"RequestId", traceID,
-		"ClientIp", strings.Split(r.RemoteAddr, ":")[0],
-		"StartTime", time.Now().Format("2006-01-02 15:04:05"),
-	)
+	rsp := response{}
+	ctx := context.Background()
 
 	// 调用链
-	ctx = opentracing.ContextWithSpan(ctx, span)
+	ctx = current.ContextWithClientCurrent(ctx)
+	preFunc := func(span opentracing.Span) {
+		if jSpan, ok := span.(*jaeger.Span); ok {
+			rsp.RequestId = jSpan.SpanContext().TraceID().String()
+		} else {
+			rsp.RequestId = uuid.UUID()
+		}
+		ctx = opentracing.ContextWithSpan(ctx, span)
+	}
+	checkFunc := func(span opentracing.Span) error {
+		if actionName != "" {
+			span.SetOperationName(actionName)
+		}
+		if rsp.Code != 0 && !ecode.IsClientErrorCode(rsp.Code) {
+			return fmt.Errorf("dode=%d, error=%s", rsp.Code, rsp.Error)
+		}
+		return nil
+	}
+	defer tracing.NewServerSpanFromHTTP(r, tracing.WithPre(preFunc), tracing.WithPostCheck(checkFunc))()
+
+	// 日志
+	cfg := tars.GetServerConfig()
+	ctx = log.WithFields(ctx,
+		"ServerName", cfg.Server,
+		"SetName", cfg.Setdivision,
+		"ServerIp", cfg.LocalIP,
+		"ReqId", rsp.RequestId,
+		"ClientIp", strings.Split(r.RemoteAddr, ":")[0],
+	)
+
 	defer func() {
 		if err := recover(); err != nil {
 			rsp.Code = ecode.ServerError
 			rsp.Error = "panic: " + fmt.Sprint(err)
 		}
-		rsp.write(ctx, w)
+		rspData := rsp.write(ctx, w)
 
 		// 日志
 		logKv := []interface{}{
@@ -87,16 +106,11 @@ func HandlerFunc(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		ctx = log.WithFields(ctx, logKv...)
-		log.Info(ctx, "done")
-
-		// 调用链
-		span.SetOperationName(actionName)
-		span.Finish()
+		log.Info(ctx, "req is %s, rsp is %s", string(reqBody), string(rspData))
 	}()
 
 	var err error
-	reqBody, err := ioutil.ReadAll(r.Body)
-	log.Debug(ctx, "req is %s", string(reqBody))
+	reqBody, err = ioutil.ReadAll(r.Body)
 	if err != nil {
 		rsp.Code, rsp.Error = ecode.ClientError, "Read request error "+err.Error()
 		return
@@ -172,13 +186,13 @@ func hashCode(s interface{}) uint32 {
 	return h.Sum32()
 }
 
-func (r *response) write(ctx context.Context, w http.ResponseWriter) {
+func (r *response) write(ctx context.Context, w http.ResponseWriter) []byte {
 	bs, _ := json.Marshal(r)
 	_, err := w.Write(bs)
-	log.Debug(ctx, "rsp is %s", string(bs))
 	if err != nil {
 		log.Error(ctx, "Write error %v", err)
 	}
+	return bs
 }
 
 func getComm(setName string) *tars.Communicator {

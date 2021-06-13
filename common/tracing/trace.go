@@ -3,6 +3,8 @@ package tracing
 import (
 	"context"
 
+	"github.com/uber/jaeger-client-go"
+
 	"github.com/TarsCloud/TarsGo/tars"
 	"github.com/opentracing/opentracing-go"
 	"github.com/tarscloud/gopractice/common/log"
@@ -17,8 +19,11 @@ func EnableJaeger() {
 	}
 	cfg := &jaegercfg.Configuration{
 		ServiceName: svcName,
+		Gen128Bit:   true,
 	}
 	cfg, err := cfg.FromEnv()
+	cfg.Sampler.Type = jaeger.SamplerTypeProbabilistic
+	cfg.Sampler.Param = 1
 	if err != nil {
 		log.Error(context.Background(), "Could not parse jaeger env vars: %s", err.Error())
 		return
