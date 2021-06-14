@@ -10,14 +10,9 @@ import (
 )
 
 var (
-	// DefaultClient is wraps the http.DefaultClient
-	DefaultClient = &Client{http.DefaultClient}
+	// DefaultClient is same as http.DefaultClient
+	DefaultClient = http.DefaultClient
 )
-
-// Client wraps http.Client
-type Client struct {
-	raw *http.Client
-}
 
 // Get wraps the http.Get
 func Get(ctx context.Context, url string) (*http.Response, error) {
@@ -59,6 +54,6 @@ func DoContext(ctx context.Context, req *http.Request) (rsp *http.Response, err 
 		WithPre(injectFunc),
 		WithPostCheck(checkFunc),
 	)()
-	rsp, err = DefaultClient.raw.Do(req)
+	rsp, err = DefaultClient.Do(req)
 	return rsp, err
 }
