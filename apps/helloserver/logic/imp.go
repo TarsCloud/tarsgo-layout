@@ -5,8 +5,6 @@ import (
 
 	"github.com/TarsCloud/TarsGo/tars"
 
-	"github.com/tarscloud/gopractice/common/tracing"
-
 	"github.com/tarscloud/gopractice/apps/helloserver/config"
 	"github.com/tarscloud/gopractice/apps/helloserver/proto/stub/Base"
 	"github.com/tarscloud/gopractice/common/log"
@@ -25,30 +23,30 @@ func init() {
 type ServerImp struct {
 }
 
-// Add ...
-// curl -d '{"A":2, "B": 3}' "http://jsontarsproxy/apis/v1/Add"
-func (s *ServerImp) Add(ctx context.Context, req *Base.AddReq, rsp *Base.AddRsp) error {
+// SayHello ...
+// curl -d '{"msg": "bob"}' "http://172.25.0.3:8082/apis/v1/sayHello"
+func (s *ServerImp) SayHello(ctx context.Context, req *Base.SayHelloRequest) (rsp Base.SayHelloReply, err error) {
 	//Doing something in your function
 	log.Debug(ctx, "Config value is %v", config.Get().Value)
 
-	sRsp := &Base.SubRsp{}
-	myClient.SubWithContext(ctx, &Base.SubReq{
-		A: req.A,
-		B: req.B,
-	}, sRsp)
-	rspx, err := tracing.Get(ctx, "http://qqxxxxxxx.com")
-	if err != nil {
-		return err
+	hiRsp, err := myClient.SayHiWithContext(ctx, &Base.SayHiRequest{
+		Name: req.Msg,
+	})
+	if code := tars.GetErrorCode(err); code != 0 {
+		log.Error(ctx, "SayHi error %v", err)
+		return
 	}
-	rspx.Body.Close()
 
-	rsp.C = req.A + req.B
-	return nil
+	rsp.Reply = "reply message:" + hiRsp.Reply
+	return
 }
 
-// Sub ...
-func (s *ServerImp) Sub(ctx context.Context, req *Base.SubReq, rsp *Base.SubRsp) error {
-	//Doing something in your function
-	//...
-	return nil
+// SayHi ...
+func (s *ServerImp) SayHi(ctx context.Context, req *Base.SayHiRequest) (rsp Base.SayHiReply, err error) {
+	if req.Name == "defoo" {
+		err = tars.Errorf(4004, "bad gay")
+		return
+	}
+	rsp.Reply = "hi " + req.Name
+	return
 }

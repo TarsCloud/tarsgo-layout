@@ -3,12 +3,14 @@ module github.com/tarscloud/gopractice
 go 1.14
 
 require (
+	git.code.oa.com/polaris/polaris-go v0.9.0
 	github.com/TarsCloud/TarsGo v1.1.7-0.20210519070617-e2dc06be2b59
 	github.com/defool/uuid v1.0.0
 	github.com/jinzhu/copier v0.3.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/opentracing-contrib/go-stdlib v1.0.0 // indirect
 	github.com/opentracing/opentracing-go v1.1.0
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/prometheus/client_golang v0.9.3
 	github.com/prometheus/common v0.4.0
 	github.com/spf13/cobra v1.1.3

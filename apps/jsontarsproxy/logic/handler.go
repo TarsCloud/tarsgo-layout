@@ -123,10 +123,6 @@ func HandlerFunc(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reqJson := make(map[string]interface{})
-	reqJson["req"] = reqBodyMap
-	reqByte, _ := json.Marshal(reqJson)
-
 	if !strings.HasPrefix(r.URL.Path, actionPrefix) {
 		rsp.Code, rsp.Error = ecode.ClientError, "Request path should starts with "+actionPrefix
 		return
@@ -158,6 +154,11 @@ func HandlerFunc(w http.ResponseWriter, r *http.Request) {
 		current.SetClientHash(ctx, int(tars.ConsistentHash), hashCode(hashVal))
 	}
 
+	reqJson := make(map[string]interface{})
+	reqJson["req"] = reqBodyMap
+	reqByte, _ := json.Marshal(reqJson)
+
+	sv.TarsSetVersion(basef.JSONVERSION)
 	if err := sv.Tars_invoke(ctx, 0, actionName, reqByte, tarsStatus, tarsContext, resp); err != nil {
 		code := tars.GetErrorCode(err)
 		if code == 1 {
@@ -172,9 +173,9 @@ func HandlerFunc(w http.ResponseWriter, r *http.Request) {
 		rsp.Code, rsp.Error = ecode.ServerError, fmt.Sprintf("Unmarshal rspByte error %v", err)
 		return
 	}
-	rspData, ok := jsonRsp["rsp"].(map[string]interface{})
+	rspData, ok := jsonRsp["tars_ret"].(map[string]interface{})
 	if !ok {
-		rsp.Code, rsp.Error = ecode.ServerError, "`rsp` not found in response"
+		rsp.Code, rsp.Error = ecode.ServerError, "`tars_ret` not found in response "+string(rspByte)
 		return
 	}
 	rsp.Data = rspData

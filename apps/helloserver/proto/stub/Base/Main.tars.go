@@ -30,8 +30,8 @@ type Main struct {
 	s m.Servant
 }
 
-//Add is the proxy function for the method defined in the tars file, with the context
-func (_obj *Main) Add(req *AddReq, rsp *AddRsp, _opt ...map[string]string) (err error) {
+//SayHello is the proxy function for the method defined in the tars file, with the context
+func (_obj *Main) SayHello(req *SayHelloRequest, _opt ...map[string]string) (ret SayHelloReply, err error) {
 
 	var length int32
 	var have bool
@@ -39,12 +39,7 @@ func (_obj *Main) Add(req *AddReq, rsp *AddRsp, _opt ...map[string]string) (err 
 	_os := codec.NewBuffer()
 	err = req.WriteBlock(_os, 1)
 	if err != nil {
-		return err
-	}
-
-	err = (*rsp).WriteBlock(_os, 2)
-	if err != nil {
-		return err
+		return ret, err
 	}
 
 	var _status map[string]string
@@ -58,15 +53,15 @@ func (_obj *Main) Add(req *AddReq, rsp *AddRsp, _opt ...map[string]string) (err 
 	_resp := new(requestf.ResponsePacket)
 	tarsCtx := context.Background()
 
-	err = _obj.s.Tars_invoke(tarsCtx, 0, "Add", _os.ToBytes(), _status, _context, _resp)
+	err = _obj.s.Tars_invoke(tarsCtx, 0, "sayHello", _os.ToBytes(), _status, _context, _resp)
 	if err != nil {
-		return err
+		return ret, err
 	}
 
 	_is := codec.NewReader(tools.Int8ToByte(_resp.SBuffer))
-	err = (*rsp).ReadBlock(_is, 2, true)
+	err = ret.ReadBlock(_is, 0, true)
 	if err != nil {
-		return err
+		return ret, err
 	}
 
 	if len(_opt) == 1 {
@@ -94,11 +89,11 @@ func (_obj *Main) Add(req *AddReq, rsp *AddRsp, _opt ...map[string]string) (err 
 	_ = length
 	_ = have
 	_ = ty
-	return nil
+	return ret, nil
 }
 
-//AddWithContext is the proxy function for the method defined in the tars file, with the context
-func (_obj *Main) AddWithContext(tarsCtx context.Context, req *AddReq, rsp *AddRsp, _opt ...map[string]string) (err error) {
+//SayHelloWithContext is the proxy function for the method defined in the tars file, with the context
+func (_obj *Main) SayHelloWithContext(tarsCtx context.Context, req *SayHelloRequest, _opt ...map[string]string) (ret SayHelloReply, err error) {
 
 	var length int32
 	var have bool
@@ -106,12 +101,7 @@ func (_obj *Main) AddWithContext(tarsCtx context.Context, req *AddReq, rsp *AddR
 	_os := codec.NewBuffer()
 	err = req.WriteBlock(_os, 1)
 	if err != nil {
-		return err
-	}
-
-	err = (*rsp).WriteBlock(_os, 2)
-	if err != nil {
-		return err
+		return ret, err
 	}
 
 	var _status map[string]string
@@ -124,15 +114,15 @@ func (_obj *Main) AddWithContext(tarsCtx context.Context, req *AddReq, rsp *AddR
 	}
 	_resp := new(requestf.ResponsePacket)
 
-	err = _obj.s.Tars_invoke(tarsCtx, 0, "Add", _os.ToBytes(), _status, _context, _resp)
+	err = _obj.s.Tars_invoke(tarsCtx, 0, "sayHello", _os.ToBytes(), _status, _context, _resp)
 	if err != nil {
-		return err
+		return ret, err
 	}
 
 	_is := codec.NewReader(tools.Int8ToByte(_resp.SBuffer))
-	err = (*rsp).ReadBlock(_is, 2, true)
+	err = ret.ReadBlock(_is, 0, true)
 	if err != nil {
-		return err
+		return ret, err
 	}
 
 	if len(_opt) == 1 {
@@ -160,11 +150,11 @@ func (_obj *Main) AddWithContext(tarsCtx context.Context, req *AddReq, rsp *AddR
 	_ = length
 	_ = have
 	_ = ty
-	return nil
+	return ret, nil
 }
 
-//AddOneWayWithContext is the proxy function for the method defined in the tars file, with the context
-func (_obj *Main) AddOneWayWithContext(tarsCtx context.Context, req *AddReq, rsp *AddRsp, _opt ...map[string]string) (err error) {
+//SayHelloOneWayWithContext is the proxy function for the method defined in the tars file, with the context
+func (_obj *Main) SayHelloOneWayWithContext(tarsCtx context.Context, req *SayHelloRequest, _opt ...map[string]string) (ret SayHelloReply, err error) {
 
 	var length int32
 	var have bool
@@ -172,12 +162,7 @@ func (_obj *Main) AddOneWayWithContext(tarsCtx context.Context, req *AddReq, rsp
 	_os := codec.NewBuffer()
 	err = req.WriteBlock(_os, 1)
 	if err != nil {
-		return err
-	}
-
-	err = (*rsp).WriteBlock(_os, 2)
-	if err != nil {
-		return err
+		return ret, err
 	}
 
 	var _status map[string]string
@@ -190,9 +175,9 @@ func (_obj *Main) AddOneWayWithContext(tarsCtx context.Context, req *AddReq, rsp
 	}
 	_resp := new(requestf.ResponsePacket)
 
-	err = _obj.s.Tars_invoke(tarsCtx, 1, "Add", _os.ToBytes(), _status, _context, _resp)
+	err = _obj.s.Tars_invoke(tarsCtx, 1, "sayHello", _os.ToBytes(), _status, _context, _resp)
 	if err != nil {
-		return err
+		return ret, err
 	}
 
 	if len(_opt) == 1 {
@@ -220,11 +205,11 @@ func (_obj *Main) AddOneWayWithContext(tarsCtx context.Context, req *AddReq, rsp
 	_ = length
 	_ = have
 	_ = ty
-	return nil
+	return ret, nil
 }
 
-//Sub is the proxy function for the method defined in the tars file, with the context
-func (_obj *Main) Sub(req *SubReq, rsp *SubRsp, _opt ...map[string]string) (err error) {
+//SayHi is the proxy function for the method defined in the tars file, with the context
+func (_obj *Main) SayHi(req *SayHiRequest, _opt ...map[string]string) (ret SayHiReply, err error) {
 
 	var length int32
 	var have bool
@@ -232,12 +217,7 @@ func (_obj *Main) Sub(req *SubReq, rsp *SubRsp, _opt ...map[string]string) (err 
 	_os := codec.NewBuffer()
 	err = req.WriteBlock(_os, 1)
 	if err != nil {
-		return err
-	}
-
-	err = (*rsp).WriteBlock(_os, 2)
-	if err != nil {
-		return err
+		return ret, err
 	}
 
 	var _status map[string]string
@@ -251,15 +231,15 @@ func (_obj *Main) Sub(req *SubReq, rsp *SubRsp, _opt ...map[string]string) (err 
 	_resp := new(requestf.ResponsePacket)
 	tarsCtx := context.Background()
 
-	err = _obj.s.Tars_invoke(tarsCtx, 0, "Sub", _os.ToBytes(), _status, _context, _resp)
+	err = _obj.s.Tars_invoke(tarsCtx, 0, "sayHi", _os.ToBytes(), _status, _context, _resp)
 	if err != nil {
-		return err
+		return ret, err
 	}
 
 	_is := codec.NewReader(tools.Int8ToByte(_resp.SBuffer))
-	err = (*rsp).ReadBlock(_is, 2, true)
+	err = ret.ReadBlock(_is, 0, true)
 	if err != nil {
-		return err
+		return ret, err
 	}
 
 	if len(_opt) == 1 {
@@ -287,11 +267,11 @@ func (_obj *Main) Sub(req *SubReq, rsp *SubRsp, _opt ...map[string]string) (err 
 	_ = length
 	_ = have
 	_ = ty
-	return nil
+	return ret, nil
 }
 
-//SubWithContext is the proxy function for the method defined in the tars file, with the context
-func (_obj *Main) SubWithContext(tarsCtx context.Context, req *SubReq, rsp *SubRsp, _opt ...map[string]string) (err error) {
+//SayHiWithContext is the proxy function for the method defined in the tars file, with the context
+func (_obj *Main) SayHiWithContext(tarsCtx context.Context, req *SayHiRequest, _opt ...map[string]string) (ret SayHiReply, err error) {
 
 	var length int32
 	var have bool
@@ -299,12 +279,7 @@ func (_obj *Main) SubWithContext(tarsCtx context.Context, req *SubReq, rsp *SubR
 	_os := codec.NewBuffer()
 	err = req.WriteBlock(_os, 1)
 	if err != nil {
-		return err
-	}
-
-	err = (*rsp).WriteBlock(_os, 2)
-	if err != nil {
-		return err
+		return ret, err
 	}
 
 	var _status map[string]string
@@ -317,15 +292,15 @@ func (_obj *Main) SubWithContext(tarsCtx context.Context, req *SubReq, rsp *SubR
 	}
 	_resp := new(requestf.ResponsePacket)
 
-	err = _obj.s.Tars_invoke(tarsCtx, 0, "Sub", _os.ToBytes(), _status, _context, _resp)
+	err = _obj.s.Tars_invoke(tarsCtx, 0, "sayHi", _os.ToBytes(), _status, _context, _resp)
 	if err != nil {
-		return err
+		return ret, err
 	}
 
 	_is := codec.NewReader(tools.Int8ToByte(_resp.SBuffer))
-	err = (*rsp).ReadBlock(_is, 2, true)
+	err = ret.ReadBlock(_is, 0, true)
 	if err != nil {
-		return err
+		return ret, err
 	}
 
 	if len(_opt) == 1 {
@@ -353,11 +328,11 @@ func (_obj *Main) SubWithContext(tarsCtx context.Context, req *SubReq, rsp *SubR
 	_ = length
 	_ = have
 	_ = ty
-	return nil
+	return ret, nil
 }
 
-//SubOneWayWithContext is the proxy function for the method defined in the tars file, with the context
-func (_obj *Main) SubOneWayWithContext(tarsCtx context.Context, req *SubReq, rsp *SubRsp, _opt ...map[string]string) (err error) {
+//SayHiOneWayWithContext is the proxy function for the method defined in the tars file, with the context
+func (_obj *Main) SayHiOneWayWithContext(tarsCtx context.Context, req *SayHiRequest, _opt ...map[string]string) (ret SayHiReply, err error) {
 
 	var length int32
 	var have bool
@@ -365,12 +340,7 @@ func (_obj *Main) SubOneWayWithContext(tarsCtx context.Context, req *SubReq, rsp
 	_os := codec.NewBuffer()
 	err = req.WriteBlock(_os, 1)
 	if err != nil {
-		return err
-	}
-
-	err = (*rsp).WriteBlock(_os, 2)
-	if err != nil {
-		return err
+		return ret, err
 	}
 
 	var _status map[string]string
@@ -383,9 +353,9 @@ func (_obj *Main) SubOneWayWithContext(tarsCtx context.Context, req *SubReq, rsp
 	}
 	_resp := new(requestf.ResponsePacket)
 
-	err = _obj.s.Tars_invoke(tarsCtx, 1, "Sub", _os.ToBytes(), _status, _context, _resp)
+	err = _obj.s.Tars_invoke(tarsCtx, 1, "sayHi", _os.ToBytes(), _status, _context, _resp)
 	if err != nil {
-		return err
+		return ret, err
 	}
 
 	if len(_opt) == 1 {
@@ -413,7 +383,7 @@ func (_obj *Main) SubOneWayWithContext(tarsCtx context.Context, req *SubReq, rsp
 	_ = length
 	_ = have
 	_ = ty
-	return nil
+	return ret, nil
 }
 
 //SetServant sets servant for the service.
@@ -442,12 +412,12 @@ func (_obj *Main) AddServantWithContext(imp _impMainWithContext, obj string) {
 }
 
 type _impMain interface {
-	Add(req *AddReq, rsp *AddRsp) (err error)
-	Sub(req *SubReq, rsp *SubRsp) (err error)
+	SayHello(req *SayHelloRequest) (ret SayHelloReply, err error)
+	SayHi(req *SayHiRequest) (ret SayHiReply, err error)
 }
 type _impMainWithContext interface {
-	Add(tarsCtx context.Context, req *AddReq, rsp *AddRsp) (err error)
-	Sub(tarsCtx context.Context, req *SubReq, rsp *SubRsp) (err error)
+	SayHello(tarsCtx context.Context, req *SayHelloRequest) (ret SayHelloReply, err error)
+	SayHi(tarsCtx context.Context, req *SayHiRequest) (ret SayHiReply, err error)
 }
 
 // Dispatch is used to call the server side implemnet for the method defined in the tars file. _withContext shows using context or not.
@@ -458,9 +428,8 @@ func (_obj *Main) Dispatch(tarsCtx context.Context, _val interface{}, tarsReq *r
 	_is := codec.NewReader(tools.Int8ToByte(tarsReq.SBuffer))
 	_os := codec.NewBuffer()
 	switch tarsReq.SFuncName {
-	case "Add":
-		var req AddReq
-		var rsp AddRsp
+	case "sayHello":
+		var req SayHelloRequest
 
 		if tarsReq.IVersion == basef.TARSVERSION {
 
@@ -503,15 +472,16 @@ func (_obj *Main) Dispatch(tarsCtx context.Context, _val interface{}, tarsReq *r
 			return err
 		}
 
+		var _funRet_ SayHelloReply
 		if _withContext == false {
 			_imp := _val.(_impMain)
-			err = _imp.Add(&req, &rsp)
+			_funRet_, err = _imp.SayHello(&req)
 		} else {
 			_imp := _val.(_impMainWithContext)
-			err = _imp.Add(tarsCtx, &req, &rsp)
+			_funRet_, err = _imp.SayHello(tarsCtx, &req)
 		}
 		if _dp_ := tars.GetDispatchReporter(); _dp_ != nil {
-			_dp_(tarsCtx, []interface{}{&req}, []interface{}{&rsp}, []interface{}{err})
+			_dp_(tarsCtx, []interface{}{&req}, []interface{}{}, []interface{}{_funRet_, err})
 		}
 		if err != nil {
 			return err
@@ -520,7 +490,7 @@ func (_obj *Main) Dispatch(tarsCtx context.Context, _val interface{}, tarsReq *r
 		if tarsReq.IVersion == basef.TARSVERSION {
 			_os.Reset()
 
-			err = rsp.WriteBlock(_os, 2)
+			err = _funRet_.WriteBlock(_os, 0)
 			if err != nil {
 				return err
 			}
@@ -528,13 +498,13 @@ func (_obj *Main) Dispatch(tarsCtx context.Context, _val interface{}, tarsReq *r
 		} else if tarsReq.IVersion == basef.TUPVERSION {
 			_tupRsp_ := tup.NewUniAttribute()
 
-			_os.Reset()
-			err = rsp.WriteBlock(_os, 0)
+			err = _funRet_.WriteBlock(_os, 0)
 			if err != nil {
 				return err
 			}
 
-			_tupRsp_.PutBuffer("rsp", _os.ToBytes())
+			_tupRsp_.PutBuffer("", _os.ToBytes())
+			_tupRsp_.PutBuffer("tars_ret", _os.ToBytes())
 
 			_os.Reset()
 			err = _tupRsp_.Encode(_os)
@@ -543,7 +513,7 @@ func (_obj *Main) Dispatch(tarsCtx context.Context, _val interface{}, tarsReq *r
 			}
 		} else if tarsReq.IVersion == basef.JSONVERSION {
 			_rspJson_ := map[string]interface{}{}
-			_rspJson_["rsp"] = rsp
+			_rspJson_["tars_ret"] = _funRet_
 
 			var _rspByte_ []byte
 			if _rspByte_, err = json.Marshal(_rspJson_); err != nil {
@@ -556,9 +526,8 @@ func (_obj *Main) Dispatch(tarsCtx context.Context, _val interface{}, tarsReq *r
 				return err
 			}
 		}
-	case "Sub":
-		var req SubReq
-		var rsp SubRsp
+	case "sayHi":
+		var req SayHiRequest
 
 		if tarsReq.IVersion == basef.TARSVERSION {
 
@@ -601,15 +570,16 @@ func (_obj *Main) Dispatch(tarsCtx context.Context, _val interface{}, tarsReq *r
 			return err
 		}
 
+		var _funRet_ SayHiReply
 		if _withContext == false {
 			_imp := _val.(_impMain)
-			err = _imp.Sub(&req, &rsp)
+			_funRet_, err = _imp.SayHi(&req)
 		} else {
 			_imp := _val.(_impMainWithContext)
-			err = _imp.Sub(tarsCtx, &req, &rsp)
+			_funRet_, err = _imp.SayHi(tarsCtx, &req)
 		}
 		if _dp_ := tars.GetDispatchReporter(); _dp_ != nil {
-			_dp_(tarsCtx, []interface{}{&req}, []interface{}{&rsp}, []interface{}{err})
+			_dp_(tarsCtx, []interface{}{&req}, []interface{}{}, []interface{}{_funRet_, err})
 		}
 		if err != nil {
 			return err
@@ -618,7 +588,7 @@ func (_obj *Main) Dispatch(tarsCtx context.Context, _val interface{}, tarsReq *r
 		if tarsReq.IVersion == basef.TARSVERSION {
 			_os.Reset()
 
-			err = rsp.WriteBlock(_os, 2)
+			err = _funRet_.WriteBlock(_os, 0)
 			if err != nil {
 				return err
 			}
@@ -626,13 +596,13 @@ func (_obj *Main) Dispatch(tarsCtx context.Context, _val interface{}, tarsReq *r
 		} else if tarsReq.IVersion == basef.TUPVERSION {
 			_tupRsp_ := tup.NewUniAttribute()
 
-			_os.Reset()
-			err = rsp.WriteBlock(_os, 0)
+			err = _funRet_.WriteBlock(_os, 0)
 			if err != nil {
 				return err
 			}
 
-			_tupRsp_.PutBuffer("rsp", _os.ToBytes())
+			_tupRsp_.PutBuffer("", _os.ToBytes())
+			_tupRsp_.PutBuffer("tars_ret", _os.ToBytes())
 
 			_os.Reset()
 			err = _tupRsp_.Encode(_os)
@@ -641,7 +611,7 @@ func (_obj *Main) Dispatch(tarsCtx context.Context, _val interface{}, tarsReq *r
 			}
 		} else if tarsReq.IVersion == basef.JSONVERSION {
 			_rspJson_ := map[string]interface{}{}
-			_rspJson_["rsp"] = rsp
+			_rspJson_["tars_ret"] = _funRet_
 
 			var _rspByte_ []byte
 			if _rspByte_, err = json.Marshal(_rspJson_); err != nil {

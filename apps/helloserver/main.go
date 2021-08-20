@@ -11,7 +11,7 @@ func main() {
 	// Init server
 	cfg := tars.GetServerConfig()
 	if err := initserver.NewOption().
-		//WithRemoteConf(cfg.Server+".json", config.Init).
+		// WithRemoteConf(cfg.Server+".json", config.Init).
 		DoInit(); err != nil {
 		panic(err)
 	}

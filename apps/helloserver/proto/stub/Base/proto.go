@@ -13,29 +13,23 @@ import (
 var _ = fmt.Errorf
 var _ = codec.FromInt8
 
-// AddReq struct implement
-type AddReq struct {
-	A int32 `json:"a"`
-	B int32 `json:"b"`
+// SayHelloRequest struct implement
+type SayHelloRequest struct {
+	Msg string `json:"msg"`
 }
 
-func (st *AddReq) ResetDefault() {
+func (st *SayHelloRequest) ResetDefault() {
 }
 
 //ReadFrom reads  from _is and put into struct.
-func (st *AddReq) ReadFrom(_is *codec.Reader) error {
+func (st *SayHelloRequest) ReadFrom(_is *codec.Reader) error {
 	var err error
 	var length int32
 	var have bool
 	var ty byte
 	st.ResetDefault()
 
-	err = _is.Read_int32(&st.A, 0, false)
-	if err != nil {
-		return err
-	}
-
-	err = _is.Read_int32(&st.B, 1, false)
+	err = _is.Read_string(&st.Msg, 0, false)
 	if err != nil {
 		return err
 	}
@@ -48,7 +42,7 @@ func (st *AddReq) ReadFrom(_is *codec.Reader) error {
 }
 
 //ReadBlock reads struct from the given tag , require or optional.
-func (st *AddReq) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
+func (st *SayHelloRequest) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
 	var err error
 	var have bool
 	st.ResetDefault()
@@ -59,7 +53,7 @@ func (st *AddReq) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
 	}
 	if !have {
 		if require {
-			return fmt.Errorf("require AddReq, but not exist. tag %d", tag)
+			return fmt.Errorf("require SayHelloRequest, but not exist. tag %d", tag)
 		}
 		return nil
 	}
@@ -78,15 +72,10 @@ func (st *AddReq) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
 }
 
 //WriteTo encode struct to buffer
-func (st *AddReq) WriteTo(_os *codec.Buffer) error {
+func (st *SayHelloRequest) WriteTo(_os *codec.Buffer) error {
 	var err error
 
-	err = _os.Write_int32(st.A, 0)
-	if err != nil {
-		return err
-	}
-
-	err = _os.Write_int32(st.B, 1)
+	err = _os.Write_string(st.Msg, 0)
 	if err != nil {
 		return err
 	}
@@ -97,7 +86,7 @@ func (st *AddReq) WriteTo(_os *codec.Buffer) error {
 }
 
 //WriteBlock encode struct
-func (st *AddReq) WriteBlock(_os *codec.Buffer, tag byte) error {
+func (st *SayHelloRequest) WriteBlock(_os *codec.Buffer, tag byte) error {
 	var err error
 	err = _os.WriteHead(codec.STRUCT_BEGIN, tag)
 	if err != nil {
@@ -116,23 +105,23 @@ func (st *AddReq) WriteBlock(_os *codec.Buffer, tag byte) error {
 	return nil
 }
 
-// AddRsp struct implement
-type AddRsp struct {
-	C int32 `json:"c"`
+// SayHelloReply struct implement
+type SayHelloReply struct {
+	Reply string `json:"reply"`
 }
 
-func (st *AddRsp) ResetDefault() {
+func (st *SayHelloReply) ResetDefault() {
 }
 
 //ReadFrom reads  from _is and put into struct.
-func (st *AddRsp) ReadFrom(_is *codec.Reader) error {
+func (st *SayHelloReply) ReadFrom(_is *codec.Reader) error {
 	var err error
 	var length int32
 	var have bool
 	var ty byte
 	st.ResetDefault()
 
-	err = _is.Read_int32(&st.C, 0, false)
+	err = _is.Read_string(&st.Reply, 0, false)
 	if err != nil {
 		return err
 	}
@@ -145,7 +134,7 @@ func (st *AddRsp) ReadFrom(_is *codec.Reader) error {
 }
 
 //ReadBlock reads struct from the given tag , require or optional.
-func (st *AddRsp) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
+func (st *SayHelloReply) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
 	var err error
 	var have bool
 	st.ResetDefault()
@@ -156,7 +145,7 @@ func (st *AddRsp) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
 	}
 	if !have {
 		if require {
-			return fmt.Errorf("require AddRsp, but not exist. tag %d", tag)
+			return fmt.Errorf("require SayHelloReply, but not exist. tag %d", tag)
 		}
 		return nil
 	}
@@ -175,10 +164,10 @@ func (st *AddRsp) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
 }
 
 //WriteTo encode struct to buffer
-func (st *AddRsp) WriteTo(_os *codec.Buffer) error {
+func (st *SayHelloReply) WriteTo(_os *codec.Buffer) error {
 	var err error
 
-	err = _os.Write_int32(st.C, 0)
+	err = _os.Write_string(st.Reply, 0)
 	if err != nil {
 		return err
 	}
@@ -189,7 +178,7 @@ func (st *AddRsp) WriteTo(_os *codec.Buffer) error {
 }
 
 //WriteBlock encode struct
-func (st *AddRsp) WriteBlock(_os *codec.Buffer, tag byte) error {
+func (st *SayHelloReply) WriteBlock(_os *codec.Buffer, tag byte) error {
 	var err error
 	err = _os.WriteHead(codec.STRUCT_BEGIN, tag)
 	if err != nil {
@@ -208,29 +197,23 @@ func (st *AddRsp) WriteBlock(_os *codec.Buffer, tag byte) error {
 	return nil
 }
 
-// SubReq struct implement
-type SubReq struct {
-	A int32 `json:"a"`
-	B int32 `json:"b"`
+// SayHiRequest struct implement
+type SayHiRequest struct {
+	Name string `json:"name"`
 }
 
-func (st *SubReq) ResetDefault() {
+func (st *SayHiRequest) ResetDefault() {
 }
 
 //ReadFrom reads  from _is and put into struct.
-func (st *SubReq) ReadFrom(_is *codec.Reader) error {
+func (st *SayHiRequest) ReadFrom(_is *codec.Reader) error {
 	var err error
 	var length int32
 	var have bool
 	var ty byte
 	st.ResetDefault()
 
-	err = _is.Read_int32(&st.A, 0, false)
-	if err != nil {
-		return err
-	}
-
-	err = _is.Read_int32(&st.B, 1, false)
+	err = _is.Read_string(&st.Name, 0, false)
 	if err != nil {
 		return err
 	}
@@ -243,7 +226,7 @@ func (st *SubReq) ReadFrom(_is *codec.Reader) error {
 }
 
 //ReadBlock reads struct from the given tag , require or optional.
-func (st *SubReq) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
+func (st *SayHiRequest) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
 	var err error
 	var have bool
 	st.ResetDefault()
@@ -254,7 +237,7 @@ func (st *SubReq) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
 	}
 	if !have {
 		if require {
-			return fmt.Errorf("require SubReq, but not exist. tag %d", tag)
+			return fmt.Errorf("require SayHiRequest, but not exist. tag %d", tag)
 		}
 		return nil
 	}
@@ -273,15 +256,10 @@ func (st *SubReq) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
 }
 
 //WriteTo encode struct to buffer
-func (st *SubReq) WriteTo(_os *codec.Buffer) error {
+func (st *SayHiRequest) WriteTo(_os *codec.Buffer) error {
 	var err error
 
-	err = _os.Write_int32(st.A, 0)
-	if err != nil {
-		return err
-	}
-
-	err = _os.Write_int32(st.B, 1)
+	err = _os.Write_string(st.Name, 0)
 	if err != nil {
 		return err
 	}
@@ -292,7 +270,7 @@ func (st *SubReq) WriteTo(_os *codec.Buffer) error {
 }
 
 //WriteBlock encode struct
-func (st *SubReq) WriteBlock(_os *codec.Buffer, tag byte) error {
+func (st *SayHiRequest) WriteBlock(_os *codec.Buffer, tag byte) error {
 	var err error
 	err = _os.WriteHead(codec.STRUCT_BEGIN, tag)
 	if err != nil {
@@ -311,23 +289,23 @@ func (st *SubReq) WriteBlock(_os *codec.Buffer, tag byte) error {
 	return nil
 }
 
-// SubRsp struct implement
-type SubRsp struct {
-	C int32 `json:"c"`
+// SayHiReply struct implement
+type SayHiReply struct {
+	Reply string `json:"reply"`
 }
 
-func (st *SubRsp) ResetDefault() {
+func (st *SayHiReply) ResetDefault() {
 }
 
 //ReadFrom reads  from _is and put into struct.
-func (st *SubRsp) ReadFrom(_is *codec.Reader) error {
+func (st *SayHiReply) ReadFrom(_is *codec.Reader) error {
 	var err error
 	var length int32
 	var have bool
 	var ty byte
 	st.ResetDefault()
 
-	err = _is.Read_int32(&st.C, 0, false)
+	err = _is.Read_string(&st.Reply, 0, false)
 	if err != nil {
 		return err
 	}
@@ -340,7 +318,7 @@ func (st *SubRsp) ReadFrom(_is *codec.Reader) error {
 }
 
 //ReadBlock reads struct from the given tag , require or optional.
-func (st *SubRsp) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
+func (st *SayHiReply) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
 	var err error
 	var have bool
 	st.ResetDefault()
@@ -351,7 +329,7 @@ func (st *SubRsp) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
 	}
 	if !have {
 		if require {
-			return fmt.Errorf("require SubRsp, but not exist. tag %d", tag)
+			return fmt.Errorf("require SayHiReply, but not exist. tag %d", tag)
 		}
 		return nil
 	}
@@ -370,10 +348,10 @@ func (st *SubRsp) ReadBlock(_is *codec.Reader, tag byte, require bool) error {
 }
 
 //WriteTo encode struct to buffer
-func (st *SubRsp) WriteTo(_os *codec.Buffer) error {
+func (st *SayHiReply) WriteTo(_os *codec.Buffer) error {
 	var err error
 
-	err = _os.Write_int32(st.C, 0)
+	err = _os.Write_string(st.Reply, 0)
 	if err != nil {
 		return err
 	}
@@ -384,7 +362,7 @@ func (st *SubRsp) WriteTo(_os *codec.Buffer) error {
 }
 
 //WriteBlock encode struct
-func (st *SubRsp) WriteBlock(_os *codec.Buffer, tag byte) error {
+func (st *SayHiReply) WriteBlock(_os *codec.Buffer, tag byte) error {
 	var err error
 	err = _os.WriteHead(codec.STRUCT_BEGIN, tag)
 	if err != nil {
