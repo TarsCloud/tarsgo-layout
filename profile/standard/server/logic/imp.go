@@ -3,7 +3,7 @@ package logic
 import (
 	"context"
 
-	"github.com/tarscloud/gopractice/common/errcode"
+	errcode "github.com/tarscloud/gopractice/common/ecode"
 
 	"github.com/tarscloud/gopractice/apps/autogen/TestApp"
 )
